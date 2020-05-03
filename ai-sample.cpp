@@ -584,21 +584,126 @@ void AI::move_task()
                     }
                     if (allay.can_move)
                     { //上面没有移动所以还能移动
-                        //50%朝向最靠近地方的非致命位置最靠近对方基地的位置移动
+                        //朝向最靠近地方的非致命位置最靠近对方基地的位置移动
+                        vector<pos_with_value> nearest_enemy_mircle_pos;
+                        for (auto pos : reach_pos_list)
+                        {
+                            int max_damage = 0;
+                            for (auto enemy : enemy_allay_list)
+                            {
+                                int dis = cube_distance(pos, enemy.pos);
+                                if (dis >= enemy.atk_range[0] && dis <= enemy.atk_range[1])
+                                {
+                                    if (enemy.atk > max_damage)
+                                    {
+                                        max_damage = enemy.atk;
+                                    }
+                                }
+                            }
+                            if (max_damage < allay.hp)
+                            {
+                                pos_with_value temp;
+                                temp.pos = pos;
+                                temp.value1 = cube_distance(enemy_pos, pos);
+                                temp.value2 = 0;
+                                nearest_enemy_mircle_pos.push_back(temp);
+                            }
+                        }
+                        sort(nearest_enemy_mircle_pos.begin(), nearest_enemy_mircle_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                            return a.value1 < b.value1;
+                        });
+                        if (!nearest_enemy_mircle_pos.empty())
+                        {
+                            move(allay.id, nearest_enemy_mircle_pos.front().pos);
+                        }
                     }
+                    //=====攻击模式 剑士 地狱火 完===================================
                 }
                 else if (allay.type == archer_str)
                 {
                     //弓箭手 朝向距离对方基地最近的非致命位置移动
-                    //.......
+                    if (allay.can_move)
+                    { //上面没有移动所以还能移动
+                        //朝向最靠近地方的非致命位置最靠近对方基地的位置移动
+                        vector<pos_with_value> nearest_enemy_mircle_pos;
+                        for (auto pos : reach_pos_list)
+                        {
+                            int max_damage = 0;
+                            for (auto enemy : enemy_allay_list)
+                            {
+                                int dis = cube_distance(pos, enemy.pos);
+                                if (dis >= enemy.atk_range[0] && dis <= enemy.atk_range[1])
+                                {
+                                    if (enemy.atk > max_damage)
+                                    {
+                                        max_damage = enemy.atk;
+                                    }
+                                }
+                            }
+                            if (max_damage < allay.hp)
+                            {
+                                //弓箭手特殊距离计算 使得目标点能打到基地
+                                pos_with_value temp;
+                                temp.pos = pos;
+                                int enemy_pos_dis = cube_distance(enemy_pos, pos);
+                                if (enemy_pos_dis <= 3)
+                                {
+                                    enemy_pos_dis = 3 - enemy_pos_dis;
+                                }
+                                else if (enemy_pos_dis >= 4)
+                                {
+                                    enemy_pos_dis = enemy_pos_dis - 4;
+                                }
+                                temp.value1 = enemy_pos_dis;
+                                temp.value2 = 0;
+                                nearest_enemy_mircle_pos.push_back(temp);
+                            }
+                        }
+                        sort(nearest_enemy_mircle_pos.begin(), nearest_enemy_mircle_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                            return a.value1 < b.value1;
+                        });
+                        if (!nearest_enemy_mircle_pos.empty())
+                        {
+                            move(allay.id, nearest_enemy_mircle_pos.front().pos);
+                        }
+                    }
                 }
                 else if (allay.type == pristest_str)
                 {
-                    //牧师 朝向覆盖己方单位最多的（非致命）点移动 非致命需要斟酌
-                    //......
+                    if (allay.can_move)
+                    {
+                        //朝向能覆盖最多己方单位的最靠近己方神迹的点行动
+                        vector<pos_with_value> most_cover_my_unit_pos;
+                        for (auto pos : reach_pos_list)
+                        {
+                            auto unit_list = units_in_range(pos, 2, map, my_camp);
+                            int cover_num = unit_list.size();
+                            pos_with_value temp;
+                            temp.pos = pos;
+                            temp.value1 = cover_num;
+                            temp.value2 = cube_distance(pos, miracle_pos);
+                            most_cover_my_unit_pos.push_back(temp);
+                        }
+                        sort(most_cover_my_unit_pos.begin(), most_cover_my_unit_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                            if (a.value1 != b.value1)
+                            {
+                                return a.value1 > b.value1;
+                            }
+                            else
+                            {
+                                return a.value2 < b.value2;
+                            }
+                        });
+                        if (!most_cover_my_unit_pos.empty())
+                        {
+                            move(allay.id, most_cover_my_unit_pos.front().pos);
+                        }
+                    }
                 }
+                //攻击模式 牧师移动 完
             }
         }
+        //攻击模式完
     }
     else if (attack_mode == DEFENSE)
     {
@@ -633,17 +738,141 @@ void AI::move_task()
                 if (allay.type == sworderman_str || allay.type == inferno_str)
                 {
                     //剑士 或者地狱火 朝向不超过中线，能打到敌方单位最多的点移动 否则朝向最靠近位置7 8的位置移动
-                    //......
+                    vector<pos_with_value> max_enemy_attack_pos;
+                    for (auto pos : reach_pos_list)
+                    {
+                        int enemy_conut = 0; //如果走到该pos能打到敌方多少单位
+                        for (auto enemy : enemy_allay_list)
+                        {
+                            if (enemy.flying == true && allay.atk_flying == true)
+                            {
+                                int dis = cube_distance(pos, enemy.pos);
+                                if (dis >= allay.atk_range[0] && dis <= allay.atk_range[1])
+                                {
+                                    enemy_conut++;
+                                }
+                            }
+                            else
+                            {
+                                int dis = cube_distance(pos, enemy.pos);
+                                if (dis >= allay.atk_range[0] && dis <= allay.atk_range[1])
+                                {
+                                    enemy_conut++;
+                                }
+                            }
+                        }
+                        pos_with_value temp;
+                        temp.pos = pos;
+                        temp.value1 = enemy_conut;
+                        temp.value2 = 0;
+                        if (cube_distance(pos, miracle_pos) <= 6)
+                        {
+                            max_enemy_attack_pos.push_back(temp);
+                        }
+                    }
+                    sort(max_enemy_attack_pos.begin(), max_enemy_attack_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                        return a.value1 > b.value1;
+                    });
+                    if (!max_enemy_attack_pos.empty() && max_enemy_attack_pos.front().value1 > 0)
+                    {
+                        move(allay.id, max_enemy_attack_pos.front().pos);
+                    }
+                    if (allay.can_move)
+                    {
+                        //否则朝向最靠近位置7 8的位置移动
+                        vector<pos_with_value> max_near78_attack_pos;
+                        for (auto pos : reach_pos_list)
+                        {
+                            int dis7 = cube_distance(pos_7, pos);
+                            int dis8 = cube_distance(pos_8, pos);
+                            int min_dis = std::min(dis7, dis8);
+                            pos_with_value temp;
+                            temp.pos = pos;
+                            temp.value1 = min_dis;
+                            temp.value2 = 0;
+                            max_enemy_attack_pos.push_back(temp);
+                        }
+                        sort(max_enemy_attack_pos.begin(), max_enemy_attack_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                            return a.value1 < b.value1;
+                        });
+                        if (!max_enemy_attack_pos.empty())
+                        {
+                            move(allay.id, max_enemy_attack_pos.front().pos);
+                        }
+                    }
                 }
                 else if (allay.type == archer_str)
                 {
                     //弓箭手 朝向距离最靠近位置5的非致命位置移动
-                    //.......
+                    if (allay.can_move)
+                    {
+                        //朝向距离最靠近位置5的非致命位置移动
+                        vector<pos_with_value> nearest_pos5_mircle_pos;
+                        for (auto pos : reach_pos_list)
+                        {
+                            int max_damage = 0;
+                            for (auto enemy : enemy_allay_list)
+                            {
+                                int dis = cube_distance(pos, enemy.pos);
+                                if (dis >= enemy.atk_range[0] && dis <= enemy.atk_range[1])
+                                {
+                                    if (enemy.atk > max_damage)
+                                    {
+                                        max_damage = enemy.atk;
+                                    }
+                                }
+                            }
+                            if (max_damage < allay.hp)
+                            {
+                                pos_with_value temp;
+                                temp.pos = pos;
+                                int pos5_pos_dis = cube_distance(pos_5, pos);
+                                temp.value1 = pos5_pos_dis;
+                                temp.value2 = 0;
+                                nearest_pos5_mircle_pos.push_back(temp);
+                            }
+                        }
+                        sort(nearest_pos5_mircle_pos.begin(), nearest_pos5_mircle_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                            return a.value1 < b.value1;
+                        });
+                        if (!nearest_pos5_mircle_pos.empty())
+                        {
+                            move(allay.id, nearest_pos5_mircle_pos.front().pos);
+                        }
+                    }
                 }
                 else if (allay.type == pristest_str)
                 {
                     //牧师 朝向覆盖己方单位最多的（非致命）点移动 非致命需要斟酌
-                    //......
+                    if (allay.can_move)
+                    {
+                        //朝向能覆盖最多己方单位的最靠近己方神迹的点行动
+                        vector<pos_with_value> most_cover_my_unit_pos;
+                        for (auto pos : reach_pos_list)
+                        {
+                            auto unit_list = units_in_range(pos, 2, map, my_camp);
+                            int cover_num = unit_list.size();
+                            pos_with_value temp;
+                            temp.pos = pos;
+                            temp.value1 = cover_num;
+                            temp.value2 = cube_distance(pos, miracle_pos);
+                            most_cover_my_unit_pos.push_back(temp);
+                        }
+                        sort(most_cover_my_unit_pos.begin(), most_cover_my_unit_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                            if (a.value1 != b.value1)
+                            {
+                                return a.value1 > b.value1;
+                            }
+                            else
+                            {
+                                return a.value2 < b.value2;
+                            }
+                        });
+                        if (!most_cover_my_unit_pos.empty())
+                        {
+                            move(allay.id, most_cover_my_unit_pos.front().pos);
+                        }
+                    }
                 }
             }
         }
@@ -683,17 +912,153 @@ void AI::move_task()
                     //剑士 或者地狱火 找到该单位id 朝向能打到这个单位的位置移动
                     //否则50 % 朝向距离该位置最近的位置移动
                     //否则朝向能打到对方最多的位置移动
-                    //....
+                    Unit target;
+                    int target_id = -1;
+                    for (auto enemy : enemy_allay_list)
+                    {
+                        if (cube_distance(enemy.pos, miracle_pos) <= 2)
+                        {
+                            target_id = enemy.id;
+                            target = enemy;
+                            break;
+                        }
+                    }
+                    if (target_id != -1)
+                    {
+                        for (auto pos : reach_pos_list)
+                        {
+                            int dis = cube_distance(pos, target.pos);
+                            if (dis >= allay.atk_range[0] && dis <= allay.atk_range[1])
+                            {
+                                //找到能打到侵犯基地的单位的位置
+                                move(allay.id, pos);
+                                break;
+                            }
+                        }
+                    }
+                    if (allay.can_move && target_id != -1)
+                    {
+                        //朝向距离这个单位最近的位置移动
+                        vector<pos_with_value> nearest_enemy_attack_pos;
+                        for (auto pos : reach_pos_list)
+                        {
+
+                            int dis = cube_distance(pos, target.pos);
+                            pos_with_value temp;
+                            temp.pos = pos;
+                            temp.value1 = dis;
+                            temp.value2 = 0;
+                            nearest_enemy_attack_pos.push_back(temp);
+                        }
+                        sort(nearest_enemy_attack_pos.begin(), nearest_enemy_attack_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                            return a.value1 < b.value1;
+                        });
+                        if (!nearest_enemy_attack_pos.empty())
+                        {
+                            move(allay.id, nearest_enemy_attack_pos.front().pos);
+                        }
+                    }
+                    if (allay.can_move)
+                    {
+                        //找不到target，朝向能打到最多人的位置前进
+                        vector<pos_with_value> max_enemy_attack_pos;
+                        for (auto pos : reach_pos_list)
+                        {
+                            int enemy_conut = 0; //如果走到该pos能打到敌方多少单位
+                            for (auto enemy : enemy_allay_list)
+                            {
+                                if (enemy.flying == true && allay.atk_flying == true)
+                                {
+                                    int dis = cube_distance(pos, enemy.pos);
+                                    if (dis >= allay.atk_range[0] && dis <= allay.atk_range[1])
+                                    {
+                                        enemy_conut++;
+                                    }
+                                }
+                                else
+                                {
+                                    int dis = cube_distance(pos, enemy.pos);
+                                    if (dis >= allay.atk_range[0] && dis <= allay.atk_range[1])
+                                    {
+                                        enemy_conut++;
+                                    }
+                                }
+                            }
+                            pos_with_value temp;
+                            temp.pos = pos;
+                            temp.value1 = enemy_conut;
+                            temp.value2 = 0;
+                            max_enemy_attack_pos.push_back(temp);
+                        }
+                        sort(max_enemy_attack_pos.begin(), max_enemy_attack_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                            return a.value1 > b.value1;
+                        });
+                        if (!max_enemy_attack_pos.empty() && max_enemy_attack_pos.front().value1 > 0)
+                        {
+                            move(allay.id, max_enemy_attack_pos.front().pos);
+                        }
+                    }
                 }
                 else if (allay.type == archer_str)
                 {
                     //弓箭手 找到该单位id 朝向能打到这个单位的位置移动
-                    //.....
+                    Unit target;
+                    int target_id = -1;
+                    for (auto enemy : enemy_allay_list)
+                    {
+                        if (cube_distance(enemy.pos, miracle_pos) <= 2)
+                        {
+                            target_id = enemy.id;
+                            target = enemy;
+                            break;
+                        }
+                    }
+                    if (target_id != -1)
+                    {
+                        for (auto pos : reach_pos_list)
+                        {
+                            int dis = cube_distance(pos, target.pos);
+                            if (dis >= allay.atk_range[0] && dis <= allay.atk_range[1])
+                            {
+                                //找到能打到侵犯基地的单位的位置
+                                move(allay.id, pos);
+                                break;
+                            }
+                        }
+                    }
                 }
                 else if (allay.type == pristest_str)
                 {
                     //牧师 朝向覆盖己方单位最多的（非致命）点移动 非致命需要斟酌
-                    //......
+                    if (allay.can_move)
+                    {
+                        //朝向能覆盖最多己方单位的最靠近己方神迹的点行动
+                        vector<pos_with_value> most_cover_my_unit_pos;
+                        for (auto pos : reach_pos_list)
+                        {
+                            auto unit_list = units_in_range(pos, 2, map, my_camp);
+                            int cover_num = unit_list.size();
+                            pos_with_value temp;
+                            temp.pos = pos;
+                            temp.value1 = cover_num;
+                            temp.value2 = cube_distance(pos, miracle_pos);
+                            most_cover_my_unit_pos.push_back(temp);
+                        }
+                        sort(most_cover_my_unit_pos.begin(), most_cover_my_unit_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                            if (a.value1 != b.value1)
+                            {
+                                return a.value1 > b.value1;
+                            }
+                            else
+                            {
+                                return a.value2 < b.value2;
+                            }
+                        });
+                        if (!most_cover_my_unit_pos.empty())
+                        {
+                            move(allay.id, most_cover_my_unit_pos.front().pos);
+                        }
+                    }
                 }
             }
         }
