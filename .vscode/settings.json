@@ -8,6 +8,7 @@
         "valarray": "cpp",
         "forward_list": "cpp",
         "list": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "ostream": "cpp"
     }
 }

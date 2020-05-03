@@ -531,6 +531,8 @@ void AI::move_task()
                     {
                         if (getUnitByPos(pos, false).id == -1)
                         { //该驻扎点可以占领
+                            cerr << "move id " << allay.id << " to " << get<0>(pos) << " " << get<1>(pos) << " " << get<2>(pos) << " "
+                                 << endl;
                             move(allay.id, pos);
                         }
                     }
@@ -579,6 +581,8 @@ void AI::move_task()
                         });
                         if (!max_enemy_attack_pos.empty() && max_enemy_attack_pos.front().value1 > 0)
                         {
+                            cerr << "move id " << allay.id << " to " << get<0>(max_enemy_attack_pos.front().pos) << " " << get<1>(max_enemy_attack_pos.front().pos) << " " << get<2>(max_enemy_attack_pos.front().pos) << " "
+                                 << endl;
                             move(allay.id, max_enemy_attack_pos.front().pos);
                         }
                     }
@@ -614,6 +618,8 @@ void AI::move_task()
                         });
                         if (!nearest_enemy_mircle_pos.empty())
                         {
+                            cerr << "move id " << allay.id << " to " << get<0>(nearest_enemy_mircle_pos.front().pos) << " " << get<1>(nearest_enemy_mircle_pos.front().pos) << " " << get<2>(nearest_enemy_mircle_pos.front().pos) << " "
+                                 << endl;
                             move(allay.id, nearest_enemy_mircle_pos.front().pos);
                         }
                     }
@@ -664,6 +670,8 @@ void AI::move_task()
                         });
                         if (!nearest_enemy_mircle_pos.empty())
                         {
+                            cerr << "move id " << allay.id << " to " << get<0>(nearest_enemy_mircle_pos.front().pos) << " " << get<1>(nearest_enemy_mircle_pos.front().pos) << " " << get<2>(nearest_enemy_mircle_pos.front().pos) << " "
+                                 << endl;
                             move(allay.id, nearest_enemy_mircle_pos.front().pos);
                         }
                     }
@@ -696,6 +704,8 @@ void AI::move_task()
                         });
                         if (!most_cover_my_unit_pos.empty())
                         {
+                            cerr << "move id " << allay.id << " to " << get<0>(most_cover_my_unit_pos.front().pos) << " " << get<1>(most_cover_my_unit_pos.front().pos) << " " << get<2>(most_cover_my_unit_pos.front().pos) << " "
+                                 << endl;
                             move(allay.id, most_cover_my_unit_pos.front().pos);
                         }
                     }
@@ -727,6 +737,8 @@ void AI::move_task()
                     {
                         if (getUnitByPos(pos, false).id == -1)
                         { //该驻扎点可以占领
+                            cerr << "move id " << allay.id << " to " << get<0>(pos) << " " << get<1>(pos) << " " << get<2>(pos) << " "
+                                 << endl;
                             move(allay.id, pos);
                         }
                     }
@@ -775,6 +787,8 @@ void AI::move_task()
                     });
                     if (!max_enemy_attack_pos.empty() && max_enemy_attack_pos.front().value1 > 0)
                     {
+                        cerr << "move id " << allay.id << " to " << get<0>(max_enemy_attack_pos.front().pos) << " " << get<1>(max_enemy_attack_pos.front().pos) << " " << get<2>(max_enemy_attack_pos.front().pos) << " "
+                             << endl;
                         move(allay.id, max_enemy_attack_pos.front().pos);
                     }
                     if (allay.can_move)
@@ -797,6 +811,8 @@ void AI::move_task()
                         });
                         if (!max_enemy_attack_pos.empty())
                         {
+                            cerr << "move id " << allay.id << " to " << get<0>(max_enemy_attack_pos.front().pos) << " " << get<1>(max_enemy_attack_pos.front().pos) << " " << get<2>(max_enemy_attack_pos.front().pos) << " "
+                                 << endl;
                             move(allay.id, max_enemy_attack_pos.front().pos);
                         }
                     }
@@ -837,6 +853,8 @@ void AI::move_task()
                         });
                         if (!nearest_pos5_mircle_pos.empty())
                         {
+                            cerr << "move id " << allay.id << " to " << get<0>(nearest_pos5_mircle_pos.front().pos) << " " << get<1>(nearest_pos5_mircle_pos.front().pos) << " " << get<2>(nearest_pos5_mircle_pos.front().pos) << " "
+                                 << endl;
                             move(allay.id, nearest_pos5_mircle_pos.front().pos);
                         }
                     }
@@ -870,6 +888,8 @@ void AI::move_task()
                         });
                         if (!most_cover_my_unit_pos.empty())
                         {
+                            cerr << "move id " << allay.id << " to " << get<0>(most_cover_my_unit_pos.front().pos) << " " << get<1>(most_cover_my_unit_pos.front().pos) << " " << get<2>(most_cover_my_unit_pos.front().pos) << " "
+                                 << endl;
                             move(allay.id, most_cover_my_unit_pos.front().pos);
                         }
                     }
@@ -899,6 +919,8 @@ void AI::move_task()
                     {
                         if (getUnitByPos(pos, false).id == -1)
                         { //该驻扎点可以占领
+                            cerr << "move id " << allay.id << " to " << get<0>(pos) << " " << get<1>(pos) << " " << get<2>(pos) << " "
+                                 << endl;
                             move(allay.id, pos);
                         }
                     }
@@ -931,6 +953,8 @@ void AI::move_task()
                             if (dis >= allay.atk_range[0] && dis <= allay.atk_range[1])
                             {
                                 //找到能打到侵犯基地的单位的位置
+                                cerr << "move id " << allay.id << " to " << get<0>(pos) << " " << get<1>(pos) << " " << get<2>(pos) << " "
+                                     << endl;
                                 move(allay.id, pos);
                                 break;
                             }
@@ -955,6 +979,8 @@ void AI::move_task()
                         });
                         if (!nearest_enemy_attack_pos.empty())
                         {
+                            cerr << "move id " << allay.id << " to " << get<0>(nearest_enemy_attack_pos.front().pos) << " " << get<1>(nearest_enemy_attack_pos.front().pos) << " " << get<2>(nearest_enemy_attack_pos.front().pos) << " "
+                                 << endl;
                             move(allay.id, nearest_enemy_attack_pos.front().pos);
                         }
                     }
@@ -995,6 +1021,8 @@ void AI::move_task()
                         });
                         if (!max_enemy_attack_pos.empty() && max_enemy_attack_pos.front().value1 > 0)
                         {
+                            cerr << "move id " << allay.id << " to " << get<0>(max_enemy_attack_pos.front().pos) << " " << get<1>(max_enemy_attack_pos.front().pos) << " " << get<2>(max_enemy_attack_pos.front().pos) << " "
+                                 << endl;
                             move(allay.id, max_enemy_attack_pos.front().pos);
                         }
                     }
@@ -1021,6 +1049,8 @@ void AI::move_task()
                             if (dis >= allay.atk_range[0] && dis <= allay.atk_range[1])
                             {
                                 //找到能打到侵犯基地的单位的位置
+                                cerr << "move id " << allay.id << " to " << get<0>(pos) << " " << get<1>(pos) << " " << get<2>(pos) << " "
+                                     << endl;
                                 move(allay.id, pos);
                                 break;
                             }
@@ -1056,6 +1086,8 @@ void AI::move_task()
                         });
                         if (!most_cover_my_unit_pos.empty())
                         {
+                            cerr << "move id " << allay.id << " to " << get<0>(most_cover_my_unit_pos.front().pos) << " " << get<1>(most_cover_my_unit_pos.front().pos) << " " << get<2>(most_cover_my_unit_pos.front().pos) << " "
+                                 << endl;
                             move(allay.id, most_cover_my_unit_pos.front().pos);
                         }
                     }
@@ -1156,6 +1188,7 @@ void AI::summon_task()
             {
                 mana -= CARD_DICT.at(archer_str)[gj_summon_level].cost;
                 available_count[archer_str] -= 1;
+                cerr << "summon " << archer_str << " level " << gj_summon_level << " at " << get<0>(undead_nearest_enemy_pos.front().pos) << " " << get<1>(undead_nearest_enemy_pos.front().pos) << " " << get<2>(undead_nearest_enemy_pos.front().pos) << " " << endl;
                 summon(archer_str, gj_summon_level, undead_nearest_enemy_pos.front().pos);
             }
             //召唤弓箭手 完
@@ -1175,23 +1208,25 @@ void AI::summon_task()
                     temp.value1 = cover_num;
                     temp.value2 = cube_distance(pos, miracle_pos);
                     most_cover_my_unit_pos.push_back(temp);
-                    sort(most_cover_my_unit_pos.begin(), most_cover_my_unit_pos.end(), [&](pos_with_value a, pos_with_value b) {
-                        if (a.value1 != b.value1)
-                        {
-                            return a.value1 > b.value1;
-                        }
-                        else
-                        {
-                            return a.value2 < b.value2;
-                        }
-                    });
-                    if (!most_cover_my_unit_pos.empty())
-                    {
-                        mana -= CARD_DICT.at(pristest_str)[ms_summon_level].cost;
-                        available_count[pristest_str] -= 1;
-                        summon(pristest_str, ms_summon_level, most_cover_my_unit_pos.front().pos);
-                    }
                 }
+            }
+            sort(most_cover_my_unit_pos.begin(), most_cover_my_unit_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                if (a.value1 != b.value1)
+                {
+                    return a.value1 > b.value1;
+                }
+                else
+                {
+                    return a.value2 < b.value2;
+                }
+            });
+            if (!most_cover_my_unit_pos.empty())
+            {
+                mana -= CARD_DICT.at(pristest_str)[ms_summon_level].cost;
+                available_count[pristest_str] -= 1;
+                cerr << "summon " << archer_str << " level " << gj_summon_level << " at " << get<0>(most_cover_my_unit_pos.front().pos) << " " << get<1>(most_cover_my_unit_pos.front().pos) << " " << get<2>(most_cover_my_unit_pos.front().pos) << " " << endl;
+
+                summon(pristest_str, ms_summon_level, most_cover_my_unit_pos.front().pos);
             }
             //召唤牧师 完
         }
@@ -1233,6 +1268,11 @@ void AI::summon_task()
             {
                 mana -= CARD_DICT.at(sworderman_str)[js_summon_level].cost;
                 available_count[sworderman_str] -= 1;
+                cerr << "summon " << archer_str << " level " << gj_summon_level << " at "
+                     << get<0>(undead_nearest_enemy_pos.front().pos) << " "
+                     << get<1>(undead_nearest_enemy_pos.front().pos) << " "
+                     << get<2>(undead_nearest_enemy_pos.front().pos) << " "
+                     << endl;
                 summon(sworderman_str, js_summon_level, undead_nearest_enemy_pos.front().pos);
             }
             //召唤剑士 完
@@ -1284,6 +1324,11 @@ void AI::summon_task()
             {
                 mana -= CARD_DICT.at(archer_str)[gj_summon_level].cost;
                 available_count[archer_str] -= 1;
+                cerr << "summon " << archer_str << " level " << gj_summon_level << " at "
+                     << get<0>(undead_nearest_miracle_pos.front().pos) << " "
+                     << get<1>(undead_nearest_miracle_pos.front().pos) << " "
+                     << get<2>(undead_nearest_miracle_pos.front().pos) << " "
+                     << endl;
                 summon(archer_str, gj_summon_level, undead_nearest_miracle_pos.front().pos);
             }
             //召唤弓箭手 完
@@ -1303,23 +1348,28 @@ void AI::summon_task()
                     temp.value1 = cover_num;
                     temp.value2 = cube_distance(pos, miracle_pos); //就改了这个
                     most_cover_my_unit_pos.push_back(temp);
-                    sort(most_cover_my_unit_pos.begin(), most_cover_my_unit_pos.end(), [&](pos_with_value a, pos_with_value b) {
-                        if (a.value1 != b.value1)
-                        {
-                            return a.value1 > b.value1;
-                        }
-                        else
-                        {
-                            return a.value2 < b.value2;
-                        }
-                    });
-                    if (!most_cover_my_unit_pos.empty())
-                    {
-                        mana -= CARD_DICT.at(pristest_str)[ms_summon_level].cost;
-                        available_count[pristest_str] -= 1;
-                        summon(pristest_str, ms_summon_level, most_cover_my_unit_pos.front().pos);
-                    }
                 }
+            }
+            sort(most_cover_my_unit_pos.begin(), most_cover_my_unit_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                if (a.value1 != b.value1)
+                {
+                    return a.value1 > b.value1;
+                }
+                else
+                {
+                    return a.value2 < b.value2;
+                }
+            });
+            if (!most_cover_my_unit_pos.empty())
+            {
+                mana -= CARD_DICT.at(pristest_str)[ms_summon_level].cost;
+                available_count[pristest_str] -= 1;
+                cerr << "summon " << archer_str << " level " << gj_summon_level << " at "
+                     << get<0>(most_cover_my_unit_pos.front().pos) << " "
+                     << get<1>(most_cover_my_unit_pos.front().pos) << " "
+                     << get<2>(most_cover_my_unit_pos.front().pos) << " "
+                     << endl;
+                summon(pristest_str, ms_summon_level, most_cover_my_unit_pos.front().pos);
             }
             //召唤牧师 完
         }
@@ -1361,6 +1411,11 @@ void AI::summon_task()
             {
                 mana -= CARD_DICT.at(sworderman_str)[js_summon_level].cost;
                 available_count[sworderman_str] -= 1;
+                cerr << "summon " << archer_str << " level " << gj_summon_level << " at "
+                     << get<0>(undead_nearest_miracle_pos.front().pos) << " "
+                     << get<1>(undead_nearest_miracle_pos.front().pos) << " "
+                     << get<2>(undead_nearest_miracle_pos.front().pos) << " "
+                     << endl;
                 summon(sworderman_str, js_summon_level, undead_nearest_miracle_pos.front().pos);
             }
             //召唤剑士 完
@@ -1394,6 +1449,11 @@ void AI::summon_task()
                     {
                         mana -= CARD_DICT.at(sworderman_str)[js_summon_level].cost;
                         available_count[sworderman_str] -= 1;
+                        cerr << "summon " << archer_str << " level " << gj_summon_level << " at "
+                             << get<0>(pos) << " "
+                             << get<1>(pos) << " "
+                             << get<2>(pos) << " "
+                             << endl;
                         summon(sworderman_str, js_summon_level, pos);
                     }
                 }
@@ -1411,6 +1471,11 @@ void AI::summon_task()
                     {
                         mana -= CARD_DICT.at(archer_str)[gj_summon_level].cost;
                         available_count[archer_str] -= 1;
+                        cerr << "summon " << archer_str << " level " << gj_summon_level << " at "
+                             << get<0>(pos) << " "
+                             << get<1>(pos) << " "
+                             << get<2>(pos) << " "
+                             << endl;
                         summon(archer_str, gj_summon_level, pos);
                     }
                 }
@@ -1454,6 +1519,11 @@ void AI::summon_task()
             {
                 mana -= CARD_DICT.at(sworderman_str)[js_summon_level].cost;
                 available_count[sworderman_str] -= 1;
+                cerr << "summon " << archer_str << " level " << gj_summon_level << " at "
+                     << get<0>(undead_nearest_miracle_pos.front().pos) << " "
+                     << get<1>(undead_nearest_miracle_pos.front().pos) << " "
+                     << get<2>(undead_nearest_miracle_pos.front().pos) << " "
+                     << endl;
                 summon(sworderman_str, js_summon_level, undead_nearest_miracle_pos.front().pos);
             }
             //召唤剑士 完
