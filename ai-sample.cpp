@@ -163,7 +163,7 @@ void AI::set_attack_mode()
         cerr << "PROTECT mode" << endl;
         return;
     }
-    if (my_population >= enemy_population)
+    if (my_population >= enemy_population - 3)
     {
         attack_mode = ATTACK;
         cerr << "ATTACK mode" << endl;
