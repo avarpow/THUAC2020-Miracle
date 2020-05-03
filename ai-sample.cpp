@@ -54,7 +54,6 @@ private:
     int enemy_camp;
     Unit archer1, archer2, js1, ms1, js2;
 
-    string archer_str = "Archer", sworderman_str = "Swordsman", pristest_str = "Priest", inferno_str = "Inferno";
     enum attack_modes
     {
         ATTACK,
@@ -88,16 +87,13 @@ private:
 
     bool near_my_miracle(Unit unit); //检测生物距离我方基地在7格以内
 
-    int getvalue(Unit a);
-
-    int cmp(Unit a, Unit b);
-
     bool canAttackMiracle(Unit a);
 
 public:
     //选择初始卡组
-    void
-    chooseCards(); //(根据初始阵营)选择初始卡组
+    string archer_str = "Archer", sworderman_str = "Swordsman", pristest_str = "Priest", inferno_str = "Inferno";
+
+    void chooseCards(); //(根据初始阵营)选择初始卡组
 
     void play(); //玩家需要编写的ai操作函数
 
@@ -287,39 +283,53 @@ void AI::game_init_pos()
     pos_4 = posShift_n(pos_7, "FF", 1);
     pos_9 = posShift_n(pos_c, "SF", 3);
 }
-int AI::getvalue(Unit a)
-{
-    if (a.type == sworderman_str)
-    {
-        return 1;
-    }
-    else if (a.type == inferno_str)
-    {
-        return 2;
-    }
-    else if (a.type == archer_str)
-    {
-        return 3;
-    }
-    else
-        return 4;
-}
-int AI::cmp(Unit a, Unit b)
-{
-    if (getvalue(a) != getvalue(b))
-    {
-        return getvalue(a) < getvalue(b);
-    }
-    else
-    {
-        return cube_distance(miracle_pos, a.pos) < cube_distance(miracle_pos, b.pos);
-    }
-}
+
 void AI::attack_task() //仅仅考虑单个单位致命，不考虑多个单位联合致命
 {
     auto my_allay_list = getUnitsByCamp(my_camp);
-    sort(my_allay_list.begin(), my_allay_list.end(), cmp);
-    //按照剑士，地狱火，弓箭手，牧师排序，相同类型距离基地近的排在前面
+    sort(my_allay_list.begin(), my_allay_list.end(), [&](Unit a, Unit b) {
+        int vala, valb;
+        if (a.type == "Swordsman")
+        {
+            vala = 1;
+        }
+        else if (a.type == "Inferno")
+        {
+            vala = 2;
+        }
+        else if (a.type == "Archer")
+        {
+            vala = 3;
+        }
+        else
+        {
+            vala = 4;
+        }
+        if (b.type == "Swordsman")
+        {
+            valb = 1;
+        }
+        else if (b.type == "Inferno")
+        {
+            valb = 2;
+        }
+        else if (b.type == "Archer")
+        {
+            valb = 3;
+        }
+        else
+        {
+            valb = 4;
+        }
+        if (vala != valb)
+        {
+            return vala < valb;
+        }
+        else
+        {
+            return cube_distance(miracle_pos, a.pos) < cube_distance(miracle_pos, b.pos);
+        }
+    }); //按照剑士，地狱火，弓箭手，牧师排序，相同类型距离基地近的排在前面
     auto enemy_allay_list = getUnitsByCamp(enemy_camp);
     int shield_flag = 0;
     Unit shield_unit;
@@ -506,7 +516,49 @@ void AI::attack_task() //仅仅考虑单个单位致命，不考虑多个单位�
 void AI::move_task()
 {
     auto my_allay_list = getUnitsByCamp(my_camp);
-    sort(my_allay_list.begin(), my_allay_list.end(), cmp);
+    sort(my_allay_list.begin(), my_allay_list.end(), [&](Unit a, Unit b) {
+        int vala, valb;
+        if (a.type == "Swordsman")
+        {
+            vala = 1;
+        }
+        else if (a.type == "Inferno")
+        {
+            vala = 2;
+        }
+        else if (a.type == "Archer")
+        {
+            vala = 3;
+        }
+        else
+        {
+            vala = 4;
+        }
+        if (b.type == "Swordsman")
+        {
+            valb = 1;
+        }
+        else if (b.type == "Inferno")
+        {
+            valb = 2;
+        }
+        else if (b.type == "Archer")
+        {
+            valb = 3;
+        }
+        else
+        {
+            valb = 4;
+        }
+        if (vala != valb)
+        {
+            return vala < valb;
+        }
+        else
+        {
+            return cube_distance(miracle_pos, a.pos) < cube_distance(miracle_pos, b.pos);
+        }
+    });
     //按照剑士，地狱火，弓箭手，牧师排序，相同类型距离基地近的排在前面
     auto enemy_allay_list = getUnitsByCamp(enemy_camp);
     if (attack_mode == ATTACK)
@@ -1131,7 +1183,49 @@ void AI::artifacts_task()
 void AI::summon_task()
 {
     auto my_allay_list = getUnitsByCamp(my_camp);
-    sort(my_allay_list.begin(), my_allay_list.end(), cmp);
+    sort(my_allay_list.begin(), my_allay_list.end(), [&](Unit a, Unit b) {
+        int vala, valb;
+        if (a.type == "Swordsman")
+        {
+            vala = 1;
+        }
+        else if (a.type == "Inferno")
+        {
+            vala = 2;
+        }
+        else if (a.type == "Archer")
+        {
+            vala = 3;
+        }
+        else
+        {
+            vala = 4;
+        }
+        if (b.type == "Swordsman")
+        {
+            valb = 1;
+        }
+        else if (b.type == "Inferno")
+        {
+            valb = 2;
+        }
+        else if (b.type == "Archer")
+        {
+            valb = 3;
+        }
+        else
+        {
+            valb = 4;
+        }
+        if (vala != valb)
+        {
+            return vala < valb;
+        }
+        else
+        {
+            return cube_distance(miracle_pos, a.pos) < cube_distance(miracle_pos, b.pos);
+        }
+    });
     //按照剑士，地狱火，弓箭手，牧师排序，相同类型距离基地近的排在前面
     auto enemy_allay_list = getUnitsByCamp(enemy_camp);
     auto summon_pos_list = getSummonPosByCamp(my_camp);
@@ -1182,7 +1276,7 @@ void AI::summon_task()
                 }
             }
             sort(undead_nearest_enemy_pos.begin(), undead_nearest_enemy_pos.end(), [&](pos_with_value a, pos_with_value b) {
-                a.value1 < b.value1;
+                return a.value1 < b.value1;
             });
             if (!undead_nearest_enemy_pos.empty())
             {
@@ -1262,7 +1356,7 @@ void AI::summon_task()
                 }
             }
             sort(undead_nearest_enemy_pos.begin(), undead_nearest_enemy_pos.end(), [&](pos_with_value a, pos_with_value b) {
-                a.value1 < b.value1;
+                return a.value1 < b.value1;
             });
             if (!undead_nearest_enemy_pos.empty())
             {
@@ -1318,7 +1412,7 @@ void AI::summon_task()
                 }
             }
             sort(undead_nearest_miracle_pos.begin(), undead_nearest_miracle_pos.end(), [&](pos_with_value a, pos_with_value b) {
-                a.value1 < b.value1;
+                return a.value1 < b.value1;
             });
             if (!undead_nearest_miracle_pos.empty())
             {
@@ -1405,7 +1499,7 @@ void AI::summon_task()
                 }
             }
             sort(undead_nearest_miracle_pos.begin(), undead_nearest_miracle_pos.end(), [&](pos_with_value a, pos_with_value b) {
-                a.value1 < b.value1;
+                return a.value1 < b.value1;
             });
             if (!undead_nearest_miracle_pos.empty())
             {
@@ -1513,7 +1607,7 @@ void AI::summon_task()
                 }
             }
             sort(undead_nearest_miracle_pos.begin(), undead_nearest_miracle_pos.end(), [&](pos_with_value a, pos_with_value b) {
-                a.value1 < b.value1;
+                return a.value1 < b.value1;
             });
             if (!undead_nearest_miracle_pos.empty())
             {
@@ -1603,72 +1697,6 @@ void AI::play()
         move_task();
         artifacts_task();
         summon_task();
-
-        //最后进行召唤
-        //将所有本方出兵点按照到对方基地的距离排序，从近到远出兵
-        auto summon_pos_list = getSummonPosByCamp(my_camp);
-        sort(summon_pos_list.begin(), summon_pos_list.end(), [this](Pos _pos1, Pos _pos2) {
-            return cube_distance(_pos1, enemy_pos) < cube_distance(_pos2, enemy_pos);
-        });
-        vector<Pos> available_summon_pos_list;
-        for (auto pos : summon_pos_list)
-        {
-            auto unit_on_pos_ground = getUnitByPos(pos, false);
-            if (unit_on_pos_ground.id == -1)
-                available_summon_pos_list.push_back(pos);
-        }
-
-        //统计各个生物的可用数量，在假设出兵点无限的情况下，按照1个剑士、1个弓箭手、1个火山龙的顺序召唤
-        int mana = players[my_camp].mana;
-        auto deck = players[my_camp].creature_capacity;
-        ::map<string, int> available_count;
-        for (const auto &card_unit : deck)
-            available_count[card_unit.type] = card_unit.available_count;
-
-        vector<string> summon_list;
-        //剑士和弓箭手数量不足或者格子不足则召唤火山龙
-        if ((available_summon_pos_list.size() == 1 || available_count["Swordsman"] + available_count["Archer"] < 2) &&
-            mana >= CARD_DICT.at("VolcanoDragon")[1].cost && available_count["VolcanoDragon"] > 0)
-        {
-            summon_list.emplace_back("VolcanoDragon");
-            mana -= CARD_DICT.at("VolcanoDragon")[1].cost;
-        }
-
-        bool suc = true;
-        while (mana >= 2 && suc)
-        {
-            suc = false;
-            if (available_count["Swordsman"] > 0 && mana >= CARD_DICT.at("Swordsman")[1].cost)
-            {
-                summon_list.emplace_back("Swordsman");
-                mana -= CARD_DICT.at("Swordsman")[1].cost;
-                available_count["Swordsman"] -= 1;
-                suc = true;
-            }
-            if (available_count["Archer"] > 0 && mana >= CARD_DICT.at("Archer")[1].cost)
-            {
-                summon_list.emplace_back("Archer");
-                mana -= CARD_DICT.at("Archer")[1].cost;
-                available_count["Archer"] -= 1;
-                suc = true;
-            }
-            if (available_count["VolcanoDragon"] > 0 && mana >= CARD_DICT.at("VolcanoDragon")[1].cost)
-            {
-                summon_list.emplace_back("VolcanoDragon");
-                mana -= CARD_DICT.at("VolcanoDragon")[1].cost;
-                available_count["VolcanoDragon"] -= 1;
-                suc = true;
-            }
-        }
-
-        int i = 0;
-        for (auto pos : available_summon_pos_list)
-        {
-            if (i == summon_list.size())
-                break;
-            summon(summon_list[i], 1, pos);
-            ++i;
-        }
     }
     endRound();
 }
