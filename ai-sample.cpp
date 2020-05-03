@@ -265,12 +265,18 @@ void AI::game_init_pos()
 
     target_barrack = map.barracks[0].pos;
     //确定离自己基地最近的驻扎点的位置
+    for (const auto &barrack : map.barracks)
+    {
+        if (cube_distance(miracle_pos, barrack.pos) <
+            cube_distance(miracle_pos, target_barrack))
+            target_barrack = barrack.pos;
+    }
     enemy_miracle_hp = 30;
     pos_a = posShift_n(miracle_pos, "FF", 1);
     pos_b = posShift_n(miracle_pos, "IF", 1);
     pos_c = posShift_n(miracle_pos, "SF", 1);
     pos_d = posShift_n(pos_b, "IB", 1);
-    pos_e = posShift_n(pos_c, "BB", 1);
+    pos_e = posShift_n(pos_c, "SB", 1);
     pos_p = posShift_n(target_barrack, "IF", 1);
     pos_q = posShift_n(target_barrack, "FF", 1);
     pos_r = posShift_n(target_barrack, "SF", 1);
@@ -280,8 +286,94 @@ void AI::game_init_pos()
     pos_2 = posShift_n(pos_6, "IF", 3);
     pos_3 = posShift_n(pos_2, "FF", 1);
     pos_7 = posShift_n(pos_5, "SF", 2);
+    pos_8 = posShift_n(pos_5, "IF", 2);
     pos_4 = posShift_n(pos_7, "FF", 1);
-    pos_9 = posShift_n(pos_c, "SF", 3);
+    pos_9 = posShift_n(pos_a, "SF", 3);
+    cerr << "pos_a "
+         << get<0>(pos_a) << " "
+         << get<1>(pos_a) << " "
+         << get<2>(pos_a) << " "
+         << endl;
+    cerr << "pos_b "
+         << get<0>(pos_b) << " "
+         << get<1>(pos_b) << " "
+         << get<2>(pos_b) << " "
+         << endl;
+    cerr << "pos_c "
+         << get<0>(pos_c) << " "
+         << get<1>(pos_c) << " "
+         << get<2>(pos_c) << " "
+         << endl;
+    cerr << "pos_d "
+         << get<0>(pos_d) << " "
+         << get<1>(pos_d) << " "
+         << get<2>(pos_d) << " "
+         << endl;
+    cerr << "pos_e "
+         << get<0>(pos_e) << " "
+         << get<1>(pos_e) << " "
+         << get<2>(pos_e) << " "
+         << endl;
+    cerr << "pos_p "
+         << get<0>(pos_p) << " "
+         << get<1>(pos_p) << " "
+         << get<2>(pos_p) << " "
+         << endl;
+    cerr << "pos_q "
+         << get<0>(pos_q) << " "
+         << get<1>(pos_q) << " "
+         << get<2>(pos_q) << " "
+         << endl;
+    cerr << "pos_r "
+         << get<0>(pos_r) << " "
+         << get<1>(pos_r) << " "
+         << get<2>(pos_r) << " "
+         << endl;
+    cerr << "pos_1 "
+         << get<0>(pos_1) << " "
+         << get<1>(pos_1) << " "
+         << get<2>(pos_1) << " "
+         << endl;
+    cerr << "pos_2 "
+         << get<0>(pos_2) << " "
+         << get<1>(pos_2) << " "
+         << get<2>(pos_2) << " "
+         << endl;
+    cerr << "pos_3 "
+         << get<0>(pos_3) << " "
+         << get<1>(pos_3) << " "
+         << get<2>(pos_3) << " "
+         << endl;
+    cerr << "pos_4 "
+         << get<0>(pos_4) << " "
+         << get<1>(pos_4) << " "
+         << get<2>(pos_4) << " "
+         << endl;
+    cerr << "pos_5 "
+         << get<0>(pos_5) << " "
+         << get<1>(pos_5) << " "
+         << get<2>(pos_5) << " "
+         << endl;
+    cerr << "pos_6 "
+         << get<0>(pos_6) << " "
+         << get<1>(pos_6) << " "
+         << get<2>(pos_6) << " "
+         << endl;
+    cerr << "pos_7 "
+         << get<0>(pos_7) << " "
+         << get<1>(pos_7) << " "
+         << get<2>(pos_7) << " "
+         << endl;
+    cerr << "pos_8 "
+         << get<0>(pos_8) << " "
+         << get<1>(pos_8) << " "
+         << get<2>(pos_8) << " "
+         << endl;
+    cerr << "pos_9 "
+         << get<0>(pos_9) << " "
+         << get<1>(pos_9) << " "
+         << get<2>(pos_9) << " "
+         << endl;
 }
 
 void AI::attack_task() //仅仅考虑单个单位致命，不考虑多个单位联合致命
@@ -1718,11 +1810,11 @@ Pos AI::posShift(Pos pos, string direct)
         else if (direct == "SF") //优势路前方（自身视角右侧为优势路）
             return make_tuple(get<0>(pos) + 1, get<1>(pos), get<2>(pos) - 1);
         else if (direct == "IF") //劣势路前方
-            return make_tuple(get<0>(pos), get<1>(pos) + 1, get<2>(pos) - 1);
+            return make_tuple(get<0>(pos), get<1>(pos) - 1, get<2>(pos) + 1);
         else if (direct == "BB") //正后方
             return make_tuple(get<0>(pos) - 1, get<1>(pos) + 1, get<2>(pos));
         else if (direct == "SB") //优势路后方
-            return make_tuple(get<0>(pos), get<1>(pos) - 1, get<2>(pos) + 1);
+            return make_tuple(get<0>(pos), get<1>(pos) + 1, get<2>(pos) - 1);
         else if (direct == "IB") //劣势路后方
             return make_tuple(get<0>(pos) - 1, get<1>(pos), get<2>(pos) + 1);
     }
@@ -1733,11 +1825,11 @@ Pos AI::posShift(Pos pos, string direct)
         else if (direct == "SF") //优势路前方（自身视角右侧为优势路）
             return make_tuple(get<0>(pos) - 1, get<1>(pos), get<2>(pos) + 1);
         else if (direct == "IF") //劣势路前方
-            return make_tuple(get<0>(pos), get<1>(pos) - 1, get<2>(pos) + 1);
+            return make_tuple(get<0>(pos), get<1>(pos) + 1, get<2>(pos) - 1);
         else if (direct == "BB") //正后方
             return make_tuple(get<0>(pos) + 1, get<1>(pos) - 1, get<2>(pos));
         else if (direct == "SB") //优势路后方
-            return make_tuple(get<0>(pos), get<1>(pos) + 1, get<2>(pos) - 1);
+            return make_tuple(get<0>(pos), get<1>(pos) - 1, get<2>(pos) + 1);
         else if (direct == "IB") //劣势路后方
             return make_tuple(get<0>(pos) + 1, get<1>(pos), get<2>(pos) - 1);
     }
