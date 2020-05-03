@@ -676,7 +676,7 @@ void AI::move_task()
                         vector<pos_with_value> most_cover_my_unit_pos;
                         for (auto pos : reach_pos_list)
                         {
-                            auto unit_list = units_in_range(pos, 2, map, my_camp);
+                            auto unit_list = units_in_range(pos, 3, map, my_camp);
                             int cover_num = unit_list.size();
                             pos_with_value temp;
                             temp.pos = pos;
@@ -850,7 +850,7 @@ void AI::move_task()
                         vector<pos_with_value> most_cover_my_unit_pos;
                         for (auto pos : reach_pos_list)
                         {
-                            auto unit_list = units_in_range(pos, 2, map, my_camp);
+                            auto unit_list = units_in_range(pos, 3, map, my_camp);
                             int cover_num = unit_list.size();
                             pos_with_value temp;
                             temp.pos = pos;
@@ -1036,7 +1036,7 @@ void AI::move_task()
                         vector<pos_with_value> most_cover_my_unit_pos;
                         for (auto pos : reach_pos_list)
                         {
-                            auto unit_list = units_in_range(pos, 2, map, my_camp);
+                            auto unit_list = units_in_range(pos, 3, map, my_camp);
                             int cover_num = unit_list.size();
                             pos_with_value temp;
                             temp.pos = pos;
@@ -1098,6 +1098,367 @@ void AI::artifacts_task()
 }
 void AI::summon_task()
 {
+    auto my_allay_list = getUnitsByCamp(my_camp);
+    sort(my_allay_list.begin(), my_allay_list.end(), cmp);
+    //按照剑士，地狱火，弓箭手，牧师排序，相同类型距离基地近的排在前面
+    auto enemy_allay_list = getUnitsByCamp(enemy_camp);
+    auto summon_pos_list = getSummonPosByCamp(my_camp);
+    vector<Pos> available_summon_pos_list;
+    for (auto pos : summon_pos_list)
+    {
+        auto unit_on_pos_ground = getUnitByPos(pos, false);
+        if (unit_on_pos_ground.id == -1)
+            available_summon_pos_list.push_back(pos);
+    }
+
+    if (attack_mode == ATTACK)
+    {
+        int mana = players[my_camp].mana;
+        auto deck = players[my_camp].creature_capacity;
+        ::map<string, int> available_count;
+        for (const auto &card_unit : deck)
+            available_count[card_unit.type] = card_unit.available_count;
+        //在法力值够用的情况下持续生成弓箭手
+        while (available_count[archer_str] > 0 && mana > (CARD_DICT.at(archer_str)[gj_summon_level].cost))
+        {
+            vector<pos_with_value> undead_nearest_enemy_pos;
+            for (auto pos : summon_pos_list)
+            {
+                if (getUnitByPos(pos, false).id == -1)
+                {
+                    int max_damage = 0;
+                    for (auto enemy : enemy_allay_list)
+                    {
+                        int dis = cube_distance(pos, enemy.pos);
+                        if (dis >= enemy.atk_range[0] && dis <= enemy.atk_range[1])
+                        {
+                            if (enemy.atk > max_damage)
+                            {
+                                max_damage = enemy.atk;
+                            }
+                        }
+                    }
+                    //非致命
+                    if (max_damage < CARD_DICT.at(archer_str)[gj_summon_level].max_hp)
+                    {
+                        pos_with_value temp;
+                        temp.pos = pos;
+                        temp.value1 = cube_distance(pos, enemy_pos);
+                        temp.value2 = 0;
+                        undead_nearest_enemy_pos.push_back(temp);
+                    }
+                }
+            }
+            sort(undead_nearest_enemy_pos.begin(), undead_nearest_enemy_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                a.value1 < b.value1;
+            });
+            if (!undead_nearest_enemy_pos.empty())
+            {
+                mana -= CARD_DICT.at(archer_str)[gj_summon_level].cost;
+                available_count[archer_str] -= 1;
+                summon(archer_str, gj_summon_level, undead_nearest_enemy_pos.front().pos);
+            }
+            //召唤弓箭手 完
+        }
+        //在法力值够用的情况下持续生成牧师
+        while (available_count[pristest_str] > 0 && mana > (CARD_DICT.at(pristest_str)[ms_summon_level].cost))
+        {
+            vector<pos_with_value> most_cover_my_unit_pos;
+            for (auto pos : summon_pos_list)
+            {
+                if (getUnitByPos(pos, false).id == -1)
+                {
+                    auto unit_list = units_in_range(pos, 3, map, my_camp);
+                    int cover_num = unit_list.size();
+                    pos_with_value temp;
+                    temp.pos = pos;
+                    temp.value1 = cover_num;
+                    temp.value2 = cube_distance(pos, miracle_pos);
+                    most_cover_my_unit_pos.push_back(temp);
+                    sort(most_cover_my_unit_pos.begin(), most_cover_my_unit_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                        if (a.value1 != b.value1)
+                        {
+                            return a.value1 > b.value1;
+                        }
+                        else
+                        {
+                            return a.value2 < b.value2;
+                        }
+                    });
+                    if (!most_cover_my_unit_pos.empty())
+                    {
+                        mana -= CARD_DICT.at(pristest_str)[ms_summon_level].cost;
+                        available_count[pristest_str] -= 1;
+                        summon(pristest_str, ms_summon_level, most_cover_my_unit_pos.front().pos);
+                    }
+                }
+            }
+            //召唤牧师 完
+        }
+        //在法力够用的情况下持续召唤剑士
+        while (available_count[sworderman_str] > 0 && mana > (CARD_DICT.at(sworderman_str)[js_summon_level].cost))
+        {
+            vector<pos_with_value> undead_nearest_enemy_pos;
+            for (auto pos : summon_pos_list)
+            {
+                if (getUnitByPos(pos, false).id == -1)
+                {
+                    int max_damage = 0;
+                    for (auto enemy : enemy_allay_list)
+                    {
+                        int dis = cube_distance(pos, enemy.pos);
+                        if (dis >= enemy.atk_range[0] && dis <= enemy.atk_range[1])
+                        {
+                            if (enemy.atk > max_damage)
+                            {
+                                max_damage = enemy.atk;
+                            }
+                        }
+                    }
+                    //非致命
+                    if (max_damage < CARD_DICT.at(sworderman_str)[js_summon_level].max_hp)
+                    {
+                        pos_with_value temp;
+                        temp.pos = pos;
+                        temp.value1 = cube_distance(pos, enemy_pos);
+                        temp.value2 = 0;
+                        undead_nearest_enemy_pos.push_back(temp);
+                    }
+                }
+            }
+            sort(undead_nearest_enemy_pos.begin(), undead_nearest_enemy_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                a.value1 < b.value1;
+            });
+            if (!undead_nearest_enemy_pos.empty())
+            {
+                mana -= CARD_DICT.at(sworderman_str)[js_summon_level].cost;
+                available_count[sworderman_str] -= 1;
+                summon(sworderman_str, js_summon_level, undead_nearest_enemy_pos.front().pos);
+            }
+            //召唤剑士 完
+        }
+    }
+    //==================DENFENSE===SUMMON===============
+    else if (attack_mode == DEFENSE)
+    {
+        int mana = players[my_camp].mana;
+        auto deck = players[my_camp].creature_capacity;
+        ::map<string, int> available_count;
+        for (const auto &card_unit : deck)
+            available_count[card_unit.type] = card_unit.available_count;
+        //在法力值够用的情况下持续生成弓箭手，在最靠近基地的地方
+        while (available_count[archer_str] > 0 && mana > (CARD_DICT.at(archer_str)[gj_summon_level].cost))
+        {
+            vector<pos_with_value> undead_nearest_miracle_pos;
+            for (auto pos : summon_pos_list)
+            {
+                if (getUnitByPos(pos, false).id == -1)
+                {
+                    int max_damage = 0;
+                    for (auto enemy : enemy_allay_list)
+                    {
+                        int dis = cube_distance(pos, enemy.pos);
+                        if (dis >= enemy.atk_range[0] && dis <= enemy.atk_range[1])
+                        {
+                            if (enemy.atk > max_damage)
+                            {
+                                max_damage = enemy.atk;
+                            }
+                        }
+                    }
+                    //非致命
+                    if (max_damage < CARD_DICT.at(archer_str)[gj_summon_level].max_hp)
+                    {
+                        pos_with_value temp;
+                        temp.pos = pos;
+                        temp.value1 = cube_distance(pos, miracle_pos); //
+                        temp.value2 = 0;
+                        undead_nearest_miracle_pos.push_back(temp);
+                    }
+                }
+            }
+            sort(undead_nearest_miracle_pos.begin(), undead_nearest_miracle_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                a.value1 < b.value1;
+            });
+            if (!undead_nearest_miracle_pos.empty())
+            {
+                mana -= CARD_DICT.at(archer_str)[gj_summon_level].cost;
+                available_count[archer_str] -= 1;
+                summon(archer_str, gj_summon_level, undead_nearest_miracle_pos.front().pos);
+            }
+            //召唤弓箭手 完
+        }
+        //在法力值够用的情况下持续生成牧师，在最大覆盖的靠近基地的地方
+        while (available_count[pristest_str] > 0 && mana > (CARD_DICT.at(pristest_str)[ms_summon_level].cost))
+        {
+            vector<pos_with_value> most_cover_my_unit_pos;
+            for (auto pos : summon_pos_list)
+            {
+                if (getUnitByPos(pos, false).id == -1)
+                {
+                    auto unit_list = units_in_range(pos, 3, map, my_camp);
+                    int cover_num = unit_list.size();
+                    pos_with_value temp;
+                    temp.pos = pos;
+                    temp.value1 = cover_num;
+                    temp.value2 = cube_distance(pos, miracle_pos); //就改了这个
+                    most_cover_my_unit_pos.push_back(temp);
+                    sort(most_cover_my_unit_pos.begin(), most_cover_my_unit_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                        if (a.value1 != b.value1)
+                        {
+                            return a.value1 > b.value1;
+                        }
+                        else
+                        {
+                            return a.value2 < b.value2;
+                        }
+                    });
+                    if (!most_cover_my_unit_pos.empty())
+                    {
+                        mana -= CARD_DICT.at(pristest_str)[ms_summon_level].cost;
+                        available_count[pristest_str] -= 1;
+                        summon(pristest_str, ms_summon_level, most_cover_my_unit_pos.front().pos);
+                    }
+                }
+            }
+            //召唤牧师 完
+        }
+        //在法力够用的情况下持续召唤剑士
+        while (available_count[sworderman_str] > 0 && mana > (CARD_DICT.at(sworderman_str)[js_summon_level].cost))
+        {
+            vector<pos_with_value> undead_nearest_miracle_pos;
+            for (auto pos : summon_pos_list)
+            {
+                if (getUnitByPos(pos, false).id == -1)
+                {
+                    int max_damage = 0;
+                    for (auto enemy : enemy_allay_list)
+                    {
+                        int dis = cube_distance(pos, enemy.pos);
+                        if (dis >= enemy.atk_range[0] && dis <= enemy.atk_range[1])
+                        {
+                            if (enemy.atk > max_damage)
+                            {
+                                max_damage = enemy.atk;
+                            }
+                        }
+                    }
+                    //非致命
+                    if (max_damage < CARD_DICT.at(sworderman_str)[js_summon_level].max_hp)
+                    {
+                        pos_with_value temp;
+                        temp.pos = pos;
+                        temp.value1 = cube_distance(pos, miracle_pos); //就改了这个
+                        temp.value2 = 0;
+                        undead_nearest_miracle_pos.push_back(temp);
+                    }
+                }
+            }
+            sort(undead_nearest_miracle_pos.begin(), undead_nearest_miracle_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                a.value1 < b.value1;
+            });
+            if (!undead_nearest_miracle_pos.empty())
+            {
+                mana -= CARD_DICT.at(sworderman_str)[js_summon_level].cost;
+                available_count[sworderman_str] -= 1;
+                summon(sworderman_str, js_summon_level, undead_nearest_miracle_pos.front().pos);
+            }
+            //召唤剑士 完
+        }
+    }
+    else if (attack_mode == PROTECT)
+    {
+        int mana = players[my_camp].mana;
+        auto deck = players[my_camp].creature_capacity;
+        ::map<string, int> available_count;
+        for (const auto &card_unit : deck)
+            available_count[card_unit.type] = card_unit.available_count;
+        Unit target;
+        int target_id = -1;
+        //找到危险目标
+        for (auto enemy : enemy_allay_list)
+        {
+            if (cube_distance(enemy.pos, miracle_pos) <= 2)
+            {
+                target_id = enemy.id;
+                target = enemy;
+            }
+        }
+        if (target_id != -1 && target.flying == false)
+        {
+            for (auto pos : summon_pos_list)
+            {
+                if (getUnitByPos(pos, false).id == -1 && cube_distance(target.pos, pos) == 1)
+                {
+                    if (available_count[sworderman_str] > 0 && mana > (CARD_DICT.at(sworderman_str)[js_summon_level].cost))
+                    {
+                        mana -= CARD_DICT.at(sworderman_str)[js_summon_level].cost;
+                        available_count[sworderman_str] -= 1;
+                        summon(sworderman_str, js_summon_level, pos);
+                    }
+                }
+            }
+        }
+        else if (target_id != -1 && target.flying == true)
+        {
+            //如果是飞行生物则找弓箭手能打到的位置
+            for (auto pos : summon_pos_list)
+            {
+                int dis = cube_distance(pos, target.pos);
+                if (getUnitByPos(pos, false).id == -1 && dis >= 3 && dis <= 4)
+                {
+                    if (available_count[archer_str] > 0 && mana > (CARD_DICT.at(archer_str)[gj_summon_level].cost))
+                    {
+                        mana -= CARD_DICT.at(archer_str)[gj_summon_level].cost;
+                        available_count[archer_str] -= 1;
+                        summon(archer_str, gj_summon_level, pos);
+                    }
+                }
+            }
+        }
+        //剩下的体力生成剑士
+        while (available_count[sworderman_str] > 0 && mana > (CARD_DICT.at(sworderman_str)[js_summon_level].cost))
+        {
+            vector<pos_with_value> undead_nearest_miracle_pos;
+            for (auto pos : summon_pos_list)
+            {
+                if (getUnitByPos(pos, false).id == -1)
+                {
+                    int max_damage = 0;
+                    for (auto enemy : enemy_allay_list)
+                    {
+                        int dis = cube_distance(pos, enemy.pos);
+                        if (dis >= enemy.atk_range[0] && dis <= enemy.atk_range[1])
+                        {
+                            if (enemy.atk > max_damage)
+                            {
+                                max_damage = enemy.atk;
+                            }
+                        }
+                    }
+                    //非致命
+                    if (max_damage < CARD_DICT.at(sworderman_str)[js_summon_level].max_hp)
+                    {
+                        pos_with_value temp;
+                        temp.pos = pos;
+                        temp.value1 = cube_distance(pos, miracle_pos); //就改了这个
+                        temp.value2 = 0;
+                        undead_nearest_miracle_pos.push_back(temp);
+                    }
+                }
+            }
+            sort(undead_nearest_miracle_pos.begin(), undead_nearest_miracle_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                a.value1 < b.value1;
+            });
+            if (!undead_nearest_miracle_pos.empty())
+            {
+                mana -= CARD_DICT.at(sworderman_str)[js_summon_level].cost;
+                available_count[sworderman_str] -= 1;
+                summon(sworderman_str, js_summon_level, undead_nearest_miracle_pos.front().pos);
+            }
+            //召唤剑士 完
+        }
+    }
 }
 void AI::play()
 {
