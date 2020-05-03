@@ -163,7 +163,7 @@ void AI::set_attack_mode()
         cerr << "PROTECT mode" << endl;
         return;
     }
-    if (my_population >= enemy_population - 3)
+    if (my_population >= enemy_population - 1)
     {
         attack_mode = ATTACK;
         cerr << "ATTACK mode" << endl;
@@ -1337,7 +1337,8 @@ void AI::summon_task()
         for (const auto &card_unit : deck)
             available_count[card_unit.type] = card_unit.available_count;
         //在法力值够用的情况下持续生成弓箭手
-        while (available_count[archer_str] > 0 && mana > (CARD_DICT.at(archer_str)[gj_summon_level].cost))
+        int prevent_time = 0;
+        while (available_count[archer_str] > 0 && mana > (CARD_DICT.at(archer_str)[gj_summon_level].cost) && ((prevent_time++) < 3))
         {
             vector<pos_with_value> undead_nearest_enemy_pos;
             for (auto pos : summon_pos_list)
@@ -1380,7 +1381,8 @@ void AI::summon_task()
             //召唤弓箭手 完
         }
         //在法力值够用的情况下持续生成牧师
-        while (available_count[pristest_str] > 0 && mana > (CARD_DICT.at(pristest_str)[ms_summon_level].cost))
+        int prevent_time = 0;
+        while (available_count[pristest_str] > 0 && mana > (CARD_DICT.at(pristest_str)[ms_summon_level].cost) && ((prevent_time++) < 3))
         {
             vector<pos_with_value> most_cover_my_unit_pos;
             for (auto pos : summon_pos_list)
@@ -1417,7 +1419,8 @@ void AI::summon_task()
             //召唤牧师 完
         }
         //在法力够用的情况下持续召唤剑士
-        while (available_count[sworderman_str] > 0 && mana > (CARD_DICT.at(sworderman_str)[js_summon_level].cost))
+        int prevent_time = 0;
+        while (available_count[sworderman_str] > 0 && mana > (CARD_DICT.at(sworderman_str)[js_summon_level].cost) && ((prevent_time++) < 3))
         {
             vector<pos_with_value> undead_nearest_enemy_pos;
             for (auto pos : summon_pos_list)
@@ -1473,7 +1476,8 @@ void AI::summon_task()
         for (const auto &card_unit : deck)
             available_count[card_unit.type] = card_unit.available_count;
         //在法力值够用的情况下持续生成弓箭手，在最靠近基地的地方
-        while (available_count[archer_str] > 0 && mana > (CARD_DICT.at(archer_str)[gj_summon_level].cost))
+        int prevent_time = 0;
+        while (available_count[archer_str] > 0 && mana > (CARD_DICT.at(archer_str)[gj_summon_level].cost) && ((prevent_time++) < 3))
         {
             vector<pos_with_value> undead_nearest_miracle_pos;
             for (auto pos : summon_pos_list)
@@ -1520,7 +1524,8 @@ void AI::summon_task()
             //召唤弓箭手 完
         }
         //在法力值够用的情况下持续生成牧师，在最大覆盖的靠近基地的地方
-        while (available_count[pristest_str] > 0 && mana > (CARD_DICT.at(pristest_str)[ms_summon_level].cost))
+        int prevent_time = 0;
+        while (available_count[pristest_str] > 0 && mana > (CARD_DICT.at(pristest_str)[ms_summon_level].cost) && ((prevent_time++) < 3))
         {
             vector<pos_with_value> most_cover_my_unit_pos;
             for (auto pos : summon_pos_list)
@@ -1560,7 +1565,8 @@ void AI::summon_task()
             //召唤牧师 完
         }
         //在法力够用的情况下持续召唤剑士
-        while (available_count[sworderman_str] > 0 && mana > (CARD_DICT.at(sworderman_str)[js_summon_level].cost))
+        int prevent_time = 0;
+        while (available_count[sworderman_str] > 0 && mana > (CARD_DICT.at(sworderman_str)[js_summon_level].cost) && ((prevent_time++) < 3))
         {
             vector<pos_with_value> undead_nearest_miracle_pos;
             for (auto pos : summon_pos_list)
@@ -1668,7 +1674,8 @@ void AI::summon_task()
             }
         }
         //剩下的体力生成剑士
-        while (available_count[sworderman_str] > 0 && mana > (CARD_DICT.at(sworderman_str)[js_summon_level].cost))
+        int prevent_time = 0;
+        while (available_count[sworderman_str] > 0 && mana > (CARD_DICT.at(sworderman_str)[js_summon_level].cost) && ((prevent_time++) < 3))
         {
             vector<pos_with_value> undead_nearest_miracle_pos;
             for (auto pos : summon_pos_list)
