@@ -28,6 +28,13 @@ using std::map;
 using std::string;
 using std::uniform_int_distribution;
 using std::vector;
+struct pos_with_value
+{
+    Pos pos;
+    int value1;
+    int value2;
+};
+
 class AI : public AiClient
 {
 private:
@@ -47,7 +54,7 @@ private:
     int enemy_camp;
     Unit archer1, archer2, js1, ms1, js2;
 
-    string archer_str = "Archer", sworderman_str = "Swordsman", pristest_str = "Priest";
+    string archer_str = "Archer", sworderman_str = "Swordsman", pristest_str = "Priest", inferno_str = "Inferno";
     enum attack_modes
     {
         ATTACK,
@@ -79,6 +86,14 @@ private:
 
     void summon_task(); //召唤生物
 
+    bool near_my_miracle(Unit unit); //检测生物距离我方基地在7格以内
+
+    int getvalue(Unit a);
+
+    int cmp(Unit a, Unit b);
+
+    bool canAttackMiracle(Unit a);
+
 public:
     //选择初始卡组
     void
@@ -105,8 +120,65 @@ public:
         }
     }
 };
+bool AI::canAttackMiracle(Unit a)
+{
+    //能否达到地方基地
+    int dis = cube_distance(a.pos, enemy_pos);
+    if (dis >= a.atk_range[0] && dis <= a.atk_range[1])
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+bool AI::near_my_miracle(Unit unit)
+{
+    if (cube_distance(unit.pos, miracle_pos) <= 6)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
 void AI::set_attack_mode()
 {
+    int protect_mode_flag = 0;
+    int enemy_population; //敌方人口数量
+    int my_population;    //我方人口数量
+    auto enemy_allay_list = getUnitsByCamp(enemy_camp);
+    auto my_allay_list = getUnitsByCamp(my_camp);
+    enemy_population = enemy_allay_list.size();
+    my_population = my_allay_list.size();
+    for (auto allay : enemy_allay_list)
+    {
+        if (cube_distance(allay.pos, miracle_pos) <= 3)
+        {
+            protect_mode_flag = 1;
+            break;
+        }
+    }
+    if (protect_mode_flag == 1)
+    { //protect模式，有敌方单位在3格以内
+        attack_mode = PROTECT;
+        cerr << "PROTECT mode" << endl;
+        return;
+    }
+    if (my_population >= enemy_population)
+    {
+        attack_mode = ATTACK;
+        cerr << "ATTACK mode" << endl;
+        return;
+    }
+    else
+    {
+        attack_mode = DEFENSE;
+        cerr << "DENFENSE mode" << endl;
+        return;
+    }
 }
 void AI::set_summon_level_by_round(int round)
 {
@@ -197,7 +269,7 @@ void AI::game_init_pos()
 
     target_barrack = map.barracks[0].pos;
     //确定离自己基地最近的驻扎点的位置
-
+    enemy_miracle_hp = 30;
     pos_a = posShift_n(miracle_pos, "FF", 1);
     pos_b = posShift_n(miracle_pos, "IF", 1);
     pos_c = posShift_n(miracle_pos, "SF", 1);
@@ -215,16 +287,419 @@ void AI::game_init_pos()
     pos_4 = posShift_n(pos_7, "FF", 1);
     pos_9 = posShift_n(pos_c, "SF", 3);
 }
-void AI::attack_task()
+int AI::getvalue(Unit a)
 {
+    if (a.type == sworderman_str)
+    {
+        return 1;
+    }
+    else if (a.type == inferno_str)
+    {
+        return 2;
+    }
+    else if (a.type == archer_str)
+    {
+        return 3;
+    }
+    else
+        return 4;
+}
+int AI::cmp(Unit a, Unit b)
+{
+    if (getvalue(a) != getvalue(b))
+    {
+        return getvalue(a) < getvalue(b);
+    }
+    else
+    {
+        return cube_distance(miracle_pos, a.pos) < cube_distance(miracle_pos, b.pos);
+    }
+}
+void AI::attack_task() //仅仅考虑单个单位致命，不考虑多个单位联合致命
+{
+    auto my_allay_list = getUnitsByCamp(my_camp);
+    sort(my_allay_list.begin(), my_allay_list.end(), cmp);
+    //按照剑士，地狱火，弓箭手，牧师排序，相同类型距离基地近的排在前面
+    auto enemy_allay_list = getUnitsByCamp(enemy_camp);
+    int shield_flag = 0;
+    Unit shield_unit;
+    //检测是否能杀死圣盾怪
+    //1检测是否圣盾存在
+    for (auto enemy : enemy_allay_list)
+    {
+        if (enemy.holy_shield == true)
+        {
+            shield_flag = 1;
+            shield_unit = enemy;
+            break;
+        }
+    }
+    //2检测是否能杀死圣盾
+    vector<Unit> atk_sield;
+    int shield_damage = 0;
+    for (auto allay : my_allay_list)
+    {
+        if (allay.can_atk == true && canAttack(allay, shield_unit))
+        {
+            shield_damage += allay.atk;
+            atk_sield.push_back(allay);
+        }
+    }
+    if (shield_damage >= shield_unit.hp)
+    {
+        for (auto allay : atk_sield)
+        {
+            if (allay.can_atk == true && canAttack(allay, shield_unit) && shield_unit.hp > 0)
+            {
+                attack(allay.id, shield_unit.id);
+                cerr << "6 unit id " << allay.id << " attack unit id" << shield_unit.id << endl;
+            }
+        }
+    }
+    //=========
+    for (auto allay : my_allay_list)
+    {
+        //第五优先级：对方在基地三格以内，我不是牧师
+        if (allay.can_atk == true && allay.type != pristest_str)
+        {
+            int target_id = -1;
+            for (auto enemy : enemy_allay_list)
+            {
+                if (canAttack(allay, enemy) && (cube_distance(miracle_pos, enemy.pos) <= 3) && enemy.hp > 0)
+                {
+                    target_id = enemy.id;
+                }
+            }
+            if (target_id != -1)
+            {
+                Unit target = getUnitById(target_id);
+                //检测目标hp大于0
+                if (target.hp > 0)
+                {
+                    attack(allay.id, target_id);
+                    cerr << "5 unit id " << allay.id << " attack unit id" << target_id << endl;
+                }
+            }
+        }
+    }
+    for (auto allay : my_allay_list)
+    {
+        //第四优先级，对方是牧师，我可以杀死对方
+        if (allay.can_atk)
+        {
+            int target_id = -1;
+            for (auto enemy : enemy_allay_list)
+            {
+                if (enemy.type == pristest_str && canAttack(allay, enemy) && allay.atk >= enemy.hp && enemy.hp > 0)
+                {
+                    target_id = enemy.id;
+                }
+            }
+            if (target_id != -1)
+            {
+                Unit target = getUnitById(target_id);
+                if (target.hp > 0)
+                {
+                    attack(allay.id, target_id);
+                    cerr << "4 unit id " << allay.id << " attack unit id" << target_id << endl;
+                }
+            }
+        }
+    }
+    for (auto allay : my_allay_list)
+    {
+        //第三优先级，可以杀死对方，对方不能杀死我
+        if (allay.can_atk)
+        {
+            int target_id = -1;
+            for (auto enemy : enemy_allay_list)
+            {
+                //能杀死
+                if (canAttack(allay, enemy) && allay.atk >= enemy.hp)
+                {
+                    //对方打不死我或者对方打不到我
+                    if (canAttack(enemy, allay) == false || canAttack(enemy, allay) && enemy.atk < allay.hp && enemy.hp > 0)
+                    {
+                        target_id = enemy.id;
+                    }
+                }
+            }
+            if (target_id != -1)
+            {
+                Unit target = getUnitById(target_id);
+                if (target.hp > 0)
+                {
+                    attack(allay.id, target_id);
+                    cerr << "3 unit id " << allay.id << " attack unit id" << target_id << endl;
+                }
+            }
+        }
+    }
+    for (auto allay : my_allay_list)
+    {
+        //第二优先级 可以攻击基地
+        if (allay.can_atk)
+        {
+            if (canAttackMiracle(allay))
+            {
+                attack(allay.id, enemy_camp);
+                enemy_miracle_hp -= allay.atk;
+                cerr << "2 attack miracle  left hp:" << enemy_miracle_hp << endl;
+            }
+        }
+    }
+    for (auto allay : my_allay_list)
+    {
+        //第一优先级 可以攻击敌方单位但是自身不会致命
+        if (allay.can_atk)
+        {
+            int target_id = -1;
+            for (auto enemy : enemy_allay_list)
+            {
+                if (canAttack(allay, enemy))
+                {
+                    //对方打不死我或者对方打不到我
+                    if (canAttack(enemy, allay) == false || canAttack(enemy, allay) && enemy.atk < allay.hp && enemy.hp > 0)
+                    {
+                        target_id = enemy.id;
+                    }
+                }
+            }
+            if (target_id != -1)
+            {
+                Unit target = getUnitById(target_id);
+                if (target.hp > 0)
+                {
+                    attack(allay.id, target_id);
+                    cerr << "1 unit id " << allay.id << " attack unit id" << target_id << endl;
+                }
+            }
+        }
+    }
+    for (auto allay : my_allay_list)
+    {
+        //第零优先级 可以换掉对面且对面在我方半区
+        if (allay.can_atk && allay.type != pristest_str)
+        {
+            int target_id = -1;
+            for (auto enemy : enemy_allay_list)
+            {
+                //对方在我方半区，不管我方单位死活，我的单位可以杀死对方，
+                if (near_my_miracle(enemy) && canAttack(allay, enemy) && enemy.hp > 0 && allay.atk > enemy.hp)
+                {
+                    target_id = enemy.id;
+                }
+            }
+            if (target_id != -1)
+            {
+                Unit target = getUnitById(target_id);
+                if (target.hp > 0)
+                {
+                    attack(allay.id, target_id);
+                    cerr << "0 unit id " << allay.id << " attack unit id" << target_id << endl;
+                }
+            }
+        }
+    }
+    //攻击结束
 }
 void AI::move_task()
 {
+    auto my_allay_list = getUnitsByCamp(my_camp);
+    sort(my_allay_list.begin(), my_allay_list.end(), cmp);
+    //按照剑士，地狱火，弓箭手，牧师排序，相同类型距离基地近的排在前面
+    auto enemy_allay_list = getUnitsByCamp(enemy_camp);
+    if (attack_mode == ATTACK)
+    {
+        for (auto allay : my_allay_list)
+        {
+            //准备每个距离可以到达的点和所有可达的点
+            auto reach_pos_with_dis = reachable(allay, map);
+            vector<Pos> reach_pos_list;
+            for (const auto &reach_pos : reach_pos_with_dis)
+            {
+                for (auto pos : reach_pos)
+                    reach_pos_list.push_back(pos);
+            }
+            if (allay.can_move && allay.type != pristest_str)
+            {
+                //第一优先级 占领驻扎点
+                for (auto pos : reach_pos_list)
+                {
+                    int barrack_status = checkBarrack(pos);
+                    if (barrack_status == -1 || barrack_status == enemy_camp)
+                    {
+                        if (getUnitByPos(pos, false).id == -1)
+                        { //该驻扎点可以占领
+                            move(allay.id, pos);
+                        }
+                    }
+                }
+            }
+            if (allay.can_move)
+            {
+                //攻击状态第二优先级
+                if (allay.type == sworderman_str || allay.type == inferno_str)
+                {
+                    //剑士 或者地狱火 50%朝向能打到敌方最多的点移动 50%朝向最靠近地方的非致命位置最靠近对方基地的位置移动
+                    int hit = probobility(50); //检测是否被概率命中，概率为百分比
+                    if (hit == 1)
+                    {
+                        vector<pos_with_value> max_enemy_attack_pos;
+                        for (auto pos : reach_pos_list)
+                        {
+                            int enemy_conut = 0; //如果走到该pos能打到敌方多少单位
+                            for (auto enemy : enemy_allay_list)
+                            {
+                                if (enemy.flying == true && allay.atk_flying == true)
+                                {
+                                    int dis = cube_distance(pos, enemy.pos);
+                                    if (dis >= allay.atk_range[0] && dis <= allay.atk_range[1])
+                                    {
+                                        enemy_conut++;
+                                    }
+                                }
+                                else
+                                {
+                                    int dis = cube_distance(pos, enemy.pos);
+                                    if (dis >= allay.atk_range[0] && dis <= allay.atk_range[1])
+                                    {
+                                        enemy_conut++;
+                                    }
+                                }
+                            }
+                            pos_with_value temp;
+                            temp.pos = pos;
+                            temp.value1 = enemy_conut;
+                            temp.value2 = 0;
+                            max_enemy_attack_pos.push_back(temp);
+                        }
+                        sort(max_enemy_attack_pos.begin(), max_enemy_attack_pos.end(), [&](pos_with_value a, pos_with_value b) {
+                            return a.value1 > b.value1;
+                        });
+                        if (!max_enemy_attack_pos.empty() && max_enemy_attack_pos.front().value1 > 0)
+                        {
+                            move(allay.id, max_enemy_attack_pos.front().pos);
+                        }
+                    }
+                    if (allay.can_move)
+                    { //上面没有移动所以还能移动
+                        //50%朝向最靠近地方的非致命位置最靠近对方基地的位置移动
+                    }
+                }
+                else if (allay.type == archer_str)
+                {
+                    //弓箭手 朝向距离对方基地最近的非致命位置移动
+                    //.......
+                }
+                else if (allay.type == pristest_str)
+                {
+                    //牧师 朝向覆盖己方单位最多的（非致命）点移动 非致命需要斟酌
+                    //......
+                }
+            }
+        }
+    }
+    else if (attack_mode == DEFENSE)
+    {
+        for (auto allay : my_allay_list)
+        {
+            //准备每个距离可以到达的点和所有可达的点
+            auto reach_pos_with_dis = reachable(allay, map);
+            vector<Pos> reach_pos_list;
+            for (const auto &reach_pos : reach_pos_with_dis)
+            {
+                for (auto pos : reach_pos)
+                    reach_pos_list.push_back(pos);
+            }
+            if (allay.can_move && allay.type != pristest_str)
+            {
+                //第一优先级 占领驻扎点
+                for (auto pos : reach_pos_list)
+                {
+                    int barrack_status = checkBarrack(pos);
+                    if (barrack_status == -1 || barrack_status == enemy_camp)
+                    {
+                        if (getUnitByPos(pos, false).id == -1)
+                        { //该驻扎点可以占领
+                            move(allay.id, pos);
+                        }
+                    }
+                }
+            }
+            if (allay.can_move)
+            {
+                //攻击状态第二优先级
+                if (allay.type == sworderman_str || allay.type == inferno_str)
+                {
+                    //剑士 或者地狱火 朝向不超过中线，能打到敌方单位最多的点移动 否则朝向最靠近位置7 8的位置移动
+                    //......
+                }
+                else if (allay.type == archer_str)
+                {
+                    //弓箭手 朝向距离最靠近位置5的非致命位置移动
+                    //.......
+                }
+                else if (allay.type == pristest_str)
+                {
+                    //牧师 朝向覆盖己方单位最多的（非致命）点移动 非致命需要斟酌
+                    //......
+                }
+            }
+        }
+    }
+    else if (attack_mode == PROTECT)
+    {
+        for (auto allay : my_allay_list)
+        {
+            //准备每个距离可以到达的点和所有可达的点
+            auto reach_pos_with_dis = reachable(allay, map);
+            vector<Pos> reach_pos_list;
+            for (const auto &reach_pos : reach_pos_with_dis)
+            {
+                for (auto pos : reach_pos)
+                    reach_pos_list.push_back(pos);
+            }
+            if (allay.can_move && allay.type != pristest_str)
+            {
+                //第一优先级 占领驻扎点
+                for (auto pos : reach_pos_list)
+                {
+                    int barrack_status = checkBarrack(pos);
+                    if (barrack_status == -1 || barrack_status == enemy_camp)
+                    {
+                        if (getUnitByPos(pos, false).id == -1)
+                        { //该驻扎点可以占领
+                            move(allay.id, pos);
+                        }
+                    }
+                }
+            }
+            if (allay.can_move)
+            {
+                //攻击状态第二优先级
+                if (allay.type == sworderman_str || allay.type == inferno_str)
+                {
+                    //剑士 或者地狱火 找到该单位id 朝向能打到这个单位的位置移动
+                    //否则50 % 朝向距离该位置最近的位置移动
+                    //否则朝向能打到对方最多的位置移动
+                    //....
+                }
+                else if (allay.type == archer_str)
+                {
+                    //弓箭手 找到该单位id 朝向能打到这个单位的位置移动
+                    //.....
+                }
+                else if (allay.type == pristest_str)
+                {
+                    //牧师 朝向覆盖己方单位最多的（非致命）点移动 非致命需要斟酌
+                    //......
+                }
+            }
+        }
+    }
 }
 void AI::artifacts_task()
-{
-}
-void AI::summon_task()
 {
     //神器能用就用，选择覆盖单位数最多的地点
     if (players[my_camp].mana >= 6 && players[my_camp].artifact[0].state == "Ready")
@@ -256,8 +731,12 @@ void AI::summon_task()
         }
     }
 }
+void AI::summon_task()
+{
+}
 void AI::play()
 {
+    cerr << "round: " << round << endl;
     //玩家需要编写的ai操作函数
 
     /*
