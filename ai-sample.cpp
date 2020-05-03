@@ -941,8 +941,8 @@ void AI::move_task()
                         vector<pos_with_value> max_near78_attack_pos;
                         for (auto pos : reach_pos_list)
                         {
-                            int dis7 = cube_distance(pos_7, pos);
-                            int dis8 = cube_distance(pos_8, pos);
+                            int dis7 = cube_distance(pos_2, pos);
+                            int dis8 = cube_distance(pos_5, pos);
                             int min_dis = std::min(dis7, dis8);
                             pos_with_value temp;
                             temp.pos = pos;
