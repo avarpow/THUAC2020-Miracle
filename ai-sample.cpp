@@ -218,10 +218,10 @@ void AI::set_summon_level(int level)
     else if (level == 4)
     {
         gj_summon_level = 3;
-        js_summon_level = 3;
+        js_summon_level = 2;
         if (attack_mode == ATTACK)
         {
-            ms_summon_level = 3;
+            ms_summon_level = 2;
         }
         else
         {
@@ -829,7 +829,14 @@ void AI::move_task()
                         for (auto pos : reach_pos_list)
                         {
                             auto unit_list = units_in_range(pos, 3, map, my_camp);
-                            int cover_num = unit_list.size();
+                            int cover_num = 0;
+                            for (auto un : unit_list)
+                            {
+                                if (un.type == sworderman_str)
+                                {
+                                    cover_num++;
+                                }
+                            }
                             pos_with_value temp;
                             temp.pos = pos;
                             temp.value1 = cover_num;
@@ -1017,7 +1024,7 @@ void AI::move_task()
                             pos_with_value temp;
                             temp.pos = pos;
                             temp.value1 = cover_num;
-                            temp.value2 = cube_distance(pos, miracle_pos);
+                            temp.value2 = cube_distance(pos, enemy_pos);
                             most_cover_my_unit_pos.push_back(temp);
                         }
                         sort(most_cover_my_unit_pos.begin(), most_cover_my_unit_pos.end(), [&](pos_with_value a, pos_with_value b) {
@@ -1211,11 +1218,18 @@ void AI::move_task()
                         for (auto pos : reach_pos_list)
                         {
                             auto unit_list = units_in_range(pos, 3, map, my_camp);
-                            int cover_num = unit_list.size();
+                            int cover_num = 0;
+                            for (auto un : unit_list)
+                            {
+                                if (un.type == sworderman_str)
+                                {
+                                    cover_num++;
+                                }
+                            }
                             pos_with_value temp;
                             temp.pos = pos;
                             temp.value1 = cover_num;
-                            temp.value2 = cube_distance(pos, miracle_pos);
+                            temp.value2 = cube_distance(pos, enemy_pos);
                             most_cover_my_unit_pos.push_back(temp);
                         }
                         sort(most_cover_my_unit_pos.begin(), most_cover_my_unit_pos.end(), [&](pos_with_value a, pos_with_value b) {
@@ -1394,7 +1408,7 @@ void AI::summon_task()
                     pos_with_value temp;
                     temp.pos = pos;
                     temp.value1 = cover_num;
-                    temp.value2 = cube_distance(pos, miracle_pos);
+                    temp.value2 = cube_distance(pos, enemy_pos);
                     most_cover_my_unit_pos.push_back(temp);
                 }
             }
@@ -1537,7 +1551,7 @@ void AI::summon_task()
                     pos_with_value temp;
                     temp.pos = pos;
                     temp.value1 = cover_num;
-                    temp.value2 = cube_distance(pos, miracle_pos); //就改了这个
+                    temp.value2 = cube_distance(pos, enemy_pos); //就改了这个
                     most_cover_my_unit_pos.push_back(temp);
                 }
             }
